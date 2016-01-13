@@ -457,7 +457,7 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 		int res = libusb_get_device_descriptor(dev, &desc);
 		unsigned short dev_vid = desc.idVendor;
 		unsigned short dev_pid = desc.idProduct;
-        printf("%i:%i\n",dev_vid,dev_pid); 
+		//printf("%04xh:%04xh\n",dev_vid,dev_pid); 
 
 		res = libusb_get_active_config_descriptor(dev, &conf_desc);
 		if (res < 0)
@@ -490,7 +490,7 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 							cur_dev->next = NULL;
 							cur_dev->path = make_path(dev, interface_num);
 
-                            printf("%s\n", make_path(dev,interface_num));
+                            //printf("%s\n", make_path(dev,interface_num));
 							res = libusb_open(dev, &handle);
 
 							if (res >= 0) {
@@ -924,7 +924,12 @@ int HID_API_EXPORT hid_write(hid_device *dev, const unsigned char *data, size_t 
 	}
 
 
-	if (dev->output_endpoint <= 0) {
+	// Hack! This used to be <= 0.
+	// I found during my own experimentation that the portal doesn't
+	// respond if you send the request to the interrupt out endpoint.
+	// This was the only change I had to made to get it to work under
+	// Linux (over what reedstrm had already done).
+	if (dev->output_endpoint >= 0) {
 		/* No interrput out endpoint. Use the Control Endpoint */
 		res = libusb_control_transfer(dev->device_handle,
 			LIBUSB_REQUEST_TYPE_CLASS|LIBUSB_RECIPIENT_INTERFACE|LIBUSB_ENDPOINT_OUT,
